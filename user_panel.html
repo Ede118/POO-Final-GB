@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cliente Usuario — Robot RRR</title>
+  <style>
+    :root{
+      --bg:#e8f6ff;
+      --card:#ffffff;
+      --line:#d0e6f7;
+      --text:#0b2638;
+      --muted:#5d6b7a;
+      --primary:#0a6dd8;
+      --primary-weak:#e6f2ff;
+      --danger:#b00020;
+      --success:#2e7d32;
+      --warning:#ed6c02;
+    }
+    html,body{height:100%;}
+    body{
+      margin:0; font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg); color:var(--text);
+    }
+    .container{max-width:1200px; margin:24px auto; padding:0 16px;}
+    h1{font-size:22px; margin:0 0 16px;}
+    .grid{display:grid; gap:16px;}
+    .g-2{grid-template-columns: 1fr 1fr;}
+    .g-3{grid-template-columns: 2fr 1fr;}
+    .card{
+      background:var(--card); border:1px solid var(--line); border-radius:12px;
+      padding:16px; box-shadow:0 1px 0 rgba(10,20,30,.04);
+    }
+    
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+    label{font-size:12px; color:var(--muted); display:block; margin-bottom:6px;}
+    input[type="text"], input[type="password"], input[type="number"]{
+      width:100%; padding:8px 10px; border:1px solid #b9cce0; border-radius:8px;
+      font-size:14px; background:#fff; color:var(--text);
+    }
+    .field{min-width:140px;}
+    .btn{
+      border:1px solid var(--primary); background:var(--primary-weak); color:var(--primary);
+      padding:8px 12px; border-radius:8px; font-weight:600; cursor:pointer;
+    }
+    .btn:active{transform:translateY(1px);}
+    .btn-danger{
+      border-color:var(--danger); color:#fff; background:var(--danger);
+      font-weight:700; box-shadow:0 2px 4px rgba(176,0,32,0.3);
+    }
+    .btn-danger:active{transform:translateY(2px); box-shadow:0 1px 2px rgba(176,0,32,0.3);}
+    .btn:disabled{opacity:0.6; cursor:not-allowed;}
+    .muted{color:var(--muted); font-size:12px;}
+    .list{border:1px solid var(--line); border-radius:8px; background:#fff; padding:8px; max-height:180px; overflow:auto;}
+    .list div{padding:6px 8px; border-bottom:1px dashed var(--line); font-size:13px;}
+    .list div:last-child{border-bottom:none;}
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; background:#eef6ff; border:1px solid var(--line); font-size:12px;}
+    .badge.on{background:#e8f5e9; border-color:#c8e6c9; color:var(--success);}
+    .badge.off{background:#ffebee; border-color:#ffcdd2; color:var(--danger);}
+    .badge.connected{background:#e8f5e9; border-color:#c8e6c9; color:var(--success);}
+    .badge.disconnected{background:#ffebee; border-color:#ffcdd2; color:var(--danger);}
+    .badge.emergency{background:#ffebee; border-color:var(--danger); color:var(--danger); font-weight:700; animation: pulse 1.5s infinite;}
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    .spacer{height:8px;}
+    .title{font-weight:700; font-size:16px;}
+    .sub{font-size:12px; color:var(--muted);}
+    .cols{display:grid; grid-template-columns: 1fr 1fr; gap:16px;}
+    .right{display:flex; justify-content:flex-end;}
+    .switch{display:inline-flex; align-items:center; gap:8px;}
+    .switch input{width:42px;}
+    .log{white-space:pre-wrap; background:#fff; border:1px solid var(--line); border-radius:8px; padding:8px; height:200px; overflow:auto; font-family:ui-monospace,Consolas,monospace; font-size:12px;}
+    .footer{margin-top:16px; font-size:12px; color:var(--muted);}
+    
+    /* Sección para el token */
+    .token-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #f5f9ff;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      max-width: 400px;
+      margin-bottom: 16px;
+    }
+    .token-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .token-value {
+      font-size: 12px;
+      font-family: ui-monospace, Consolas, monospace;
+      color: var(--text);
+      background: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #d0e6f7;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Cliente Usuario — Robot RRR</h1>
+
+    <!-- Sección del token -->
+    <div class="token-section">
+      <span class="token-label">Token:</span>
+      <span class="token-value" id="tokenPreview">—</span>
+    </div>
+
+    <div class="grid g-3">
+      <section class="card">
+        <div class="title">Estado</div>
+        <div class="sub">Conexión, modo, posición, actuadores</div>
+        <div class="spacer"></div>
+        <div class="row">
+          <div class="badge">Puerto: <span id="port">/dev/ttyUSB0</span></div>
+          <div class="badge disconnected" id="connectedBadge">Conectado: <span id="connected">No</span></div>
+          <div class="badge on" id="remoteBadge">Remote: <span id="remote">ON</span></div>
+        </div>
+        <div class="spacer"></div>
+        <div class="row">
+          <div class="badge">Modo: <span id="mode">ABS</span></div>
+          <div class="badge">Pos: X=<span id="posx">0</span> Y=<span id="posy">0</span> Z=<span id="posz">0</span></div>
+          <div class="badge off" id="motorsBadge">Motores: <span id="motors">OFF</span></div>
+          <div class="badge off" id="gripBadge">Garra: <span id="grip">OFF</span></div>
+          <div class="right" style="flex:1">
+            <button class="btn btn-danger" id="estopBtn" onclick="emergencyStop()">E-Stop</button>
+            <button class="btn" id="resetBtn" onclick="resetEmergency()" style="display:none;">Reset</button>
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <div class="badge" id="emergencyStatus" style="display:none;"></div>
+      </section>
+    </div>
+
+    <div class="grid g-2" style="margin-top:16px;">
+      <section class="card">
+        <div class="title">Control Manual</div>
+        <div class="sub">AppServer → RobotController</div>
+        <div class="spacer"></div>
+        <div class="row">
+          <button class="btn" id="homeBtn" onclick="send('home')">Home (G28)</button>
+          <button class="btn" id="absBtn" onclick="send('setAbs')">ABS (G90)</button>
+          <button class="btn" id="relBtn" onclick="send('setRel')">REL (G91)</button>
+          <button class="btn" id="motorBtn" onclick="toggleMotors()">Motores ON/OFF</button>
+          <button class="btn" id="gripBtn" onclick="toggleGrip()">Garra ON/OFF</button>
+        </div>
+        <div class="spacer"></div>
+        <div class="row">
+          <div class="field"><label>X (mm)</label><input id="x" type="number" step="0.1" value="0"/></div>
+          <div class="field"><label>Y (mm)</label><input id="y" type="number" step="0.1" value="0"/></div>
+          <div class="field"><label>Z (mm)</label><input id="z" type="number" step="0.1" value="0"/></div>
+          <div class="field"><label>F (mm/min)</label><input id="f" type="number" step="1" value="1200"/></div>
+          <button class="btn" id="moveBtn" onclick="move()">Mover (G1)</button>
+        </div>
+        <div class="spacer"></div>
+        <div class="title" style="font-size:14px;margin-bottom:8px;">Cola de comandos</div>
+        <div class="list" id="queue"></div>
+      </section>
+
+      <section class="card">
+        <div class="title">Archivos G-code</div>
+        <div class="sub">AppServer.upload / listTasks / runFile</div>
+        <div class="spacer"></div>
+        <div class="row">
+          <input id="file" type="file" />
+          <button class="btn" id="uploadBtn" onclick="upload()">Subir archivo…</button>
+          <button class="btn" id="runBtn" onclick="runSelected()">Seleccionar y Ejecutar</button>
+        </div>
+        <div class="spacer"></div>
+        <div class="list" id="files">
+          <div>jobs/caja.gcode</div>
+          <div>jobs/palet.gcode</div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="title">Log</div>
+      <div class="log" id="log"></div>
+    </section>
+
+    <div class="footer">Panel de usuario. Funcionalidades básicas de control y monitoreo.</div>
+  </div>
+
+  <script>
+    const queue = document.getElementById('queue');
+    const logEl = document.getElementById('log');
+    const filesEl = document.getElementById('files');
+    const tokenPreview = document.getElementById('tokenPreview');
+    const connectedEl = document.getElementById('connected');
+    const connectedBadge = document.getElementById('connectedBadge');
+    const modeEl = document.getElementById('mode');
+    const motorsEl = document.getElementById('motors');
+    const motorsBadge = document.getElementById('motorsBadge');
+    const gripEl = document.getElementById('grip');
+    const gripBadge = document.getElementById('gripBadge');
+    const remoteEl = document.getElementById('remote');
+    const remoteBadge = document.getElementById('remoteBadge');
+    const posx = document.getElementById('posx');
+    const posy = document.getElementById('posy');
+    const posz = document.getElementById('posz');
+    const emergencyStatus = document.getElementById('emergencyStatus');
+
+    // Estado del sistema
+    let emergencyState = false;
+    let systemEnabled = true;
+
+    // Inicializar token
+    tokenPreview.textContent = 'tkn_'+Math.random().toString(36).slice(2,8);
+
+    function updateBadgeClass(badge, isOn) {
+      if (isOn) {
+        badge.classList.remove('off', 'disconnected');
+        badge.classList.add('on', 'connected');
+      } else {
+        badge.classList.remove('on', 'connected');
+        badge.classList.add('off', 'disconnected');
+      }
+    }
+
+    function toggleSystem(enabled) {
+      systemEnabled = enabled;
+      const buttons = ['homeBtn', 'absBtn', 'relBtn', 'motorBtn', 'gripBtn', 'moveBtn', 
+                      'uploadBtn', 'runBtn'];
+      
+      buttons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          btn.disabled = !enabled;
+        }
+      });
+    }
+
+    function emergencyStop() {
+      if (emergencyState) return; // Ya está en estado de emergencia
+      
+      emergencyState = true;
+      systemEnabled = false;
+      
+      // Actualizar interfaz
+      document.getElementById('estopBtn').style.display = 'none';
+      document.getElementById('resetBtn').style.display = 'inline-block';
+      emergencyStatus.style.display = 'inline-block';
+      emergencyStatus.textContent = 'EMERGENCIA - SISTEMA BLOQUEADO';
+      emergencyStatus.className = 'badge emergency';
+      
+      // Deshabilitar controles
+      toggleSystem(false);
+      
+      // Apagar motores y garra inmediatamente
+      motorsEl.textContent = 'OFF';
+      gripEl.textContent = 'OFF';
+      updateBadgeClass(motorsBadge, false);
+      updateBadgeClass(gripBadge, false);
+      
+      // Limpiar cola de comandos
+      queue.innerHTML = '<div>EMERGENCY STOP - COLA VACÍADA</div>';
+      
+      // Registrar evento
+      const ts = new Date().toISOString();
+      logLine(`🛑 EMERGENCY STOP ACTIVADO - TODAS LAS OPERACIONES DETENIDAS`);
+      logLine(`⏸️ Motores desactivados - Garra desactivada - Cola de comandos vaciada`);
+      logLine(`🔒 Sistema bloqueado - Requiere reset manual`);
+      
+      // Simular llamada al servidor
+      simulateCall('emergencyStop', {timestamp: ts, reason: 'manual'});
+    }
+
+    function resetEmergency() {
+      if (!emergencyState) return;
+      
+      emergencyState = false;
+      systemEnabled = true;
+      
+      // Actualizar interfaz
+      document.getElementById('estopBtn').style.display = 'inline-block';
+      document.getElementById('resetBtn').style.display = 'none';
+      emergencyStatus.style.display = 'none';
+      
+      // Habilitar controles
+      toggleSystem(true);
+      
+      // Registrar evento
+      const ts = new Date().toISOString();
+      logLine(`🔄 RESET DE EMERGENCIA - SISTEMA REACTIVADO`);
+      logLine(`✅ Controles habilitados - Listo para operar`);
+      
+      // Simular llamada al servidor
+      simulateCall('resetEmergency', {timestamp: ts});
+    }
+
+    function logLine(s){
+      const ts = new Date().toISOString();
+      logEl.textContent += `[${ts}] ${s}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function enqueue(cmd){
+      if (emergencyState) {
+        logLine(`❌ Comando bloqueado: ${cmd} - Sistema en estado de emergencia`);
+        return;
+      }
+      const d = document.createElement('div');
+      d.textContent = cmd;
+      queue.prepend(d);
+    }
+
+    function simulateCall(action, params = {}){
+      logLine(`CALL ${action} ${JSON.stringify(params)}`);
+    }
+
+    function send(action){
+      if (emergencyState) {
+        logLine(`❌ Acción bloqueada: ${action} - Sistema en estado de emergencia`);
+        return;
+      }
+      simulateCall(action,{});
+      if(action==='home'){ posx.textContent='0'; posy.textContent='0'; posz.textContent='0'; enqueue('G28'); }
+      if(action==='setAbs'){ modeEl.textContent='ABS'; enqueue('G90'); }
+      if(action==='setRel'){ modeEl.textContent='REL'; enqueue('G91'); }
+    }
+
+    function toggleMotors(){
+      if (emergencyState) {
+        logLine(`❌ Motores bloqueados - Sistema en estado de emergencia`);
+        return;
+      }
+      const isOn = motorsEl.textContent === 'ON';
+      motorsEl.textContent = isOn ? 'OFF' : 'ON';
+      updateBadgeClass(motorsBadge, !isOn);
+      enqueue('MOTOR TOGGLE');
+      simulateCall('motors',{on: !isOn});
+    }
+
+    function toggleGrip(){
+      if (emergencyState) {
+        logLine(`❌ Garra bloqueada - Sistema en estado de emergencia`);
+        return;
+      }
+      const isOn = gripEl.textContent === 'ON';
+      gripEl.textContent = isOn ? 'OFF' : 'ON';
+      updateBadgeClass(gripBadge, !isOn);
+      enqueue('GRIP TOGGLE');
+      simulateCall('gripper',{on: !isOn});
+    }
+
+    function move(){
+      if (emergencyState) {
+        logLine(`❌ Movimiento bloqueado - Sistema en estado de emergencia`);
+        return;
+      }
+      const x = parseFloat(document.getElementById('x').value||0);
+      const y = parseFloat(document.getElementById('y').value||0);
+      const z = parseFloat(document.getElementById('z').value||0);
+      const f = parseFloat(document.getElementById('f').value||1200);
+      enqueue(`G1 X${x} Y${y} Z${z} F${f}`);
+      simulateCall('move',{x,y,z,f});
+      posx.textContent = x.toString(); posy.textContent = y.toString(); posz.textContent = z.toString();
+    }
+
+    function upload(){
+      if (emergencyState) {
+        logLine(`❌ Subida bloqueada - Sistema en estado de emergencia`);
+        return;
+      }
+      const fi = document.getElementById('file');
+      if(!fi.files.length){ alert('Seleccione un archivo'); return; }
+      const name = fi.files[0].name;
+      const d = document.createElement('div'); d.textContent = 'jobs/'+name;
+      filesEl.appendChild(d);
+      simulateCall('upload',{name});
+    }
+
+    function runSelected(){
+      if (emergencyState) {
+        logLine(`❌ Ejecución bloqueada - Sistema en estado de emergencia`);
+        return;
+      }
+      const last = filesEl.lastElementChild ? filesEl.lastElementChild.textContent : 'jobs/caja.gcode';
+      enqueue('RUNFILE '+last);
+      simulateCall('runFile',{path:last});
+    }
+  </script>
+</body>
+</html>
